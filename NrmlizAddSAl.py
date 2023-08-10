@@ -29,12 +29,34 @@ for file in files:
     df = pd.read_csv(file, encoding='latin-1', low_memory=False)
     # Replaces all spaces with nan
     df = df.replace([''], np.nan)
+
     # drops row if address is blank
     # df = df.dropna(subset=['CnAdrPrf_Addrline1'])
     # drop row if all name information are blank - estates and orgs
     # df = df.dropna(subset=['CnBio_First_Name', 'CnBio_Last_Name', 'CnSpSpBio_First_Name', 'CnSpSpBio_Last_Name'], how='all')
     # drops duplicate ConsID
     df = df.drop_duplicates(subset=['CnBio_ID'])
+
+    
+    def swap_rows_based_on_gender(row):
+        if row['CnBio_Gender'] == 'Female' and row['CnSpSpBio_Gender'] == 'Male':
+            temp_gender = row['CnBio_Gender']
+            temp_first_name = row['CnBio_First_Name']
+            temp_last_name = row['CnBio_Last_Name']
+            temp_title = row['CnBio_Title_1']
+
+            row['CnBio_Gender'] = row['CnSpSpBio_Gender']
+            row['CnBio_First_Name'] = row['CnSpSpBio_First_Name']
+            row['CnBio_Last_Name'] = row['CnSpSpBio_Last_Name']
+            row['CnBio_Title_1'] = row['CnSpSpBio_Title_1']
+
+            row['CnSpSpBio_Gender'] = temp_gender
+            row['CnSpSpBio_First_Name'] = temp_first_name
+            row['CnSpSpBio_Last_Name'] = temp_last_name
+            row['CnSpSpBio_Title_1'] = temp_title
+        return row
+
+    df = df.apply(swap_rows_based_on_gender, axis=1)
 
 
     # This function update Ms and Miss to mrs if the last names are the same and marital status is married 2016-8067
@@ -139,7 +161,8 @@ for file in files:
     # Standard Add/sal for married couple
     def Standard_Add_Sal_7(row): 
         global commonTitles
-        if ((row['CnBio_Last_Name'] == row['CnSpSpBio_Last_Name']) and (row['CnBio_Marital_status'] != 'Widowed') and (row['CnBio_Marital_status'] == 'Married') and ((row['CnBio_Title_1'] in commonTitles) or (row['CnSpSpBio_Title_1'] in commonTitles)  ) ):
+        if ((row['CnBio_Last_Name'] == row['CnSpSpBio_Last_Name']) and (row['CnBio_Marital_status'] != 'Widowed') and 
+            (row['CnBio_Marital_status'] == 'Married') and ((row['CnBio_Title_1'] in commonTitles) or (row['CnSpSpBio_Title_1'] in commonTitles)  ) ):
             row['CnBio_Marital_status'] = 'StandardAddSal_7'
         return row
     df = df.apply(Standard_Add_Sal_7, axis=1) 
@@ -188,15 +211,15 @@ for file in files:
             salutation = str(row['CnBio_Title_1']) + ' and ' + str(row['CnSpSpBio_Title_1']) + ' ' + str(row['CnBio_Last_Name'])
 
         # Gives: Same_Last_Name_Same_Title_Special_3
-        # Senator Bryce Howard and Dr. Thien Nguyen
-        # Senator Howard and Dr. Nguyen
+        # Dr. Bryce Howard and Dr. Jen Howard
+        # Dr. Howard and Dr. Howard
         elif (row['CnBio_Marital_status'] == 'SameLastNameSameTitleSpecial_3'):
             addressee = str(row['CnBio_Title_1']) + ' ' + str(row['CnBio_First_Name']) + ' ' + str(row['CnBio_Last_Name']) + ' and ' + str(row['CnSpSpBio_Title_1']) + ' ' + str(row['CnSpSpBio_First_Name']) + ' ' +  str( row['CnSpSpBio_Last_Name'])
             salutation = str(row['CnBio_Title_1']) + ' ' + str(row['CnBio_Last_Name']) + ' and ' + str(row['CnSpSpBio_Title_1']) + ' ' + str(row['CnSpSpBio_Last_Name'])
 
         # Same_Last_Name_Both_Specical_Title_4 
-        # Senator Bryce Howard and Dr. Thien Nguyen
-        # Senator Howard and Dr. Nguyen
+        # Senator Bryce Howard and Dr. Jen Howard
+        # Senator Howard and Dr. Howard
         elif (row['CnBio_Marital_status'] == 'SameLastNameBothSpecicalTitle_4'):
             addressee = str(row['CnBio_Title_1']) + ' ' + str(row['CnBio_First_Name']) + ' ' + str(row['CnBio_Last_Name']) + ' and ' + str(row['CnSpSpBio_Title_1']) + ' ' + str(row['CnSpSpBio_First_Name']) + ' ' +  str( row['CnSpSpBio_Last_Name'])
             salutation = str(row['CnBio_Title_1']) + ' ' + str(row['CnBio_Last_Name']) + ' and ' + str(row['CnSpSpBio_Title_1']) + ' ' + str(row['CnSpSpBio_Last_Name'])
@@ -236,14 +259,14 @@ for file in files:
     df[['CnAdrSal_Addressee', 'CnAdrSal_Salutation']] = df.apply(concate_add_sal, axis=1)
 
 
-    # list of columns_to_drop 
-    columns_to_drop = ['CnAdrPrf_Type', 'CnAdrPrf_Sndmailtthisaddrss', 'CnSpSpBio_Anonymous', 'CnBio_Gender', 'CnSpSpBio_Gender', 
-                       'CnSpSpBio_Inactive', 'CnSpSpBio_Deceased',   'CnSpSpBio_Marital_status', 'CnBio_Marital_status']
+    # list of columns_to_drop I stopped droppping columns and decided to do that manually after this runs to better trouble shoot any issues.
+    #columns_to_drop = ['CnAdrPrf_Type', 'CnAdrPrf_Sndmailtthisaddrss', 'CnSpSpBio_Anonymous', 'CnBio_Gender', 'CnSpSpBio_Gender', 
+                       #'CnSpSpBio_Inactive', 'CnSpSpBio_Deceased',   'CnSpSpBio_Marital_status', 'CnBio_Marital_status']
     
 #'CnBio_Inactive','CnSpSpBio_ID', 'CnBio_Deceased', 'CnBio_Anonymous', 'CnBio_Title_1', 'CnSpSpBio_Title_1', 'CnSpSpBio_First_Name', 'CnSpSpBio_Last_Name','CnBio_Org_Name',,'CnBio_Org_ID', 
 
     # drops columns in list
-    df = df.drop(columns=columns_to_drop)
+    #df = df.drop(columns=columns_to_drop)
     # Sort the DataFrame by 'CnBio_Last_Name' and 'CnBio_First_Name'
     
     # Split the file name and extension
