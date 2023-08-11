@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `NrmlizAddSAl.py` script is a data cleaning and manipulation tool designed to process and refine multiple `.CSV` files within a directory. Its primary purpose is to generate 'Addressee' and 'Salutation' fields based on various conditions and logic. The header names need to be in the formatt of RE export i.e. ConsID/Constituent ID needs to be CnBio_ID 
+The `NrmlizAddSAl.py` script is a data cleaning and manipulation tool designed to process and refine multiple `.CSV` files within a directory. Its primary purpose is to generate 'Addressee' and 'Salutation' fields based on various conditions and logic. The header names need to be in the formatt of RE export i.e. ConsID/Constituent ID needs to be CnBio_ID. Titla and Gender need to be cleaned. Blank titles will result in NAn being concatenated, this is intentional.
 
 ## Features
 
